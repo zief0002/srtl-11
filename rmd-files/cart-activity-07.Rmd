@@ -1,0 +1,87 @@
+---
+title: "Follow-Up"
+date: "`r Sys.Date()`"
+header-includes:
+   - \usepackage{xcolor}
+   - \usepackage[framemethod=tikz]{mdframed}
+   - \usepackage{graphicx}
+   - \usepackage{rotating}
+   - \usepackage{booktabs}
+   - \usepackage{float}
+   - \usepackage{lscape}
+   - \usepackage{subcaption}
+   - \definecolor{umn}{RGB}{153, 0, 85}
+   - \definecolor{umn2}{rgb}{0.1843137, 0.4509804, 0.5372549}
+   - \definecolor{myorange}{HTML}{EA6153}
+output: 
+  pdf_document:
+    highlight: tango
+    latex_engine: xelatex
+    fig_width: 6
+    fig_height: 6
+mainfont: "Bembo Std"
+sansfont: "Helvetica Neue UltraLight"
+monofont: Inconsolata
+urlcolor: "umn2"
+always_allow_html: yes
+---
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(huxtable)
+library(tidyr)
+library(DiagrammeR)
+```
+
+Dr. Cynthia A. Reyes-Thompson, a statistician for the *Thirty-Two-Sixty-Four Insurance Company*, used a sample of Titanic data to create a decision tree (shown below). She reported that the tree accurately classified 90% of the cases. The CEO of the company is impressed by this result and is considering implementing Cynthias's set of decision rules to decide insurance rates for potential future passengers. Write a letter to the CEO addressing whether adopting Cynthia's model would be a good idea.
+
+\vspace{1.5in}
+
+```{r echo=FALSE, fig.cap="Dr. Cynthia A. Reyes-Thompson's Decision Tree.", out.width="4.5in", fig.align='center', fig.pos="H"}
+knitr::include_graphics("figs/titanic-overfit.png")
+```
+
+
+
+```{r overfit-tree, message=FALSE, echo=FALSE, eval=FALSE}
+# Create a simple NDF
+nodes =
+  create_node_df(
+    n = 5,
+    #type = c("a", "a", "b", "b"),
+    label = c("Age < 20?", "Age < 22", "Died", "Survived", "Died"),
+    color = "gray20",
+    fillcolor = "white",
+    shape = c("box", "box", "oval", "oval", "oval"),
+    fontname = "Baskerville",
+    fontsize = 6
+    )
+
+
+# Create a simple EDF
+edges <-
+  create_edge_df(
+    from = c(1, 1, 2, 2),
+    to = c(2, 3, 4, 5),
+    #rel = c("Age < 25", "Age >= 10"),
+    label = c("No", "Yes  ", "No", "Yes  "),
+    labeldistance = 1,
+    labelfloat = TRUE,
+    headport = "n",
+    color = "gray20",
+    fontname = "Baskerville",
+    fontsize = 6
+  )
+
+# Create the graph object
+create_graph(
+    nodes_df = nodes,
+    edges_df = edges
+    ) %>%
+  render_graph(layout = "tree")
+
+
+
+```

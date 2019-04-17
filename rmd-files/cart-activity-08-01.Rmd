@@ -1,0 +1,347 @@
+---
+title: "An Example of Recursive Partitioning and Pruning"
+date: "`r Sys.Date()`"
+header-includes:
+   - \usepackage{xcolor}
+   - \usepackage[framemethod=tikz]{mdframed}
+   - \usepackage{graphicx}
+   - \usepackage{rotating}
+   - \usepackage{booktabs}
+   - \usepackage{float}
+   - \usepackage{lscape}
+   - \definecolor{umn}{RGB}{153, 0, 85}
+   - \definecolor{umn2}{rgb}{0.1843137, 0.4509804, 0.5372549}
+   - \definecolor{myorange}{HTML}{EA6153}
+output: 
+  pdf_document:
+    highlight: tango
+    latex_engine: xelatex
+    fig_width: 6
+    fig_height: 6
+mainfont: "Bembo Std"
+sansfont: "Helvetica Neue UltraLight"
+monofont: Inconsolata
+urlcolor: "umn2"
+always_allow_html: yes
+---
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width=8, fig.heigh=6, out.width='4in', fig.align = 'center', fig.pos = 'H')
+library(dplyr)
+library(ggplot2)
+library(ggsci)
+library(gridExtra)
+library(scales)
+library(DiagrammeR)
+
+my_data = readr::read_csv("data/activity-08-data.csv")
+
+#head(my_data)
+
+# Create labels
+my_lab = data.frame(
+  X1 = c(5.4, 0.2, 9),
+  X2 = c(10, 10, 4.35),
+  lab = c("1", "2.1", "2.2")
+)
+```
+
+In this activity you will learn more about the underlying algorithm for CART. To help in this endeavor, you will be creating a decision tree by mimicing the algorithm. Remember that an [algorithm](https://www.google.com/search?q=algorithm&oq=algorithm&aqs=chrome..69i57j69i59l2j69i61j69i60l2.1826j0j4&sourceid=chrome&ie=UTF-8) is "a process or set of rules to be followed in calculations or other problem-solving operations, especially by a computer". The algorithm that is used to create a decision tree is called *recursive partitioning*, and the rule that it uses is:
+
+> Partition (split) the data dichotomously (into two parts) to obtain the highest classification accuracy rate it can.
+
+As you work through this activity to create the decision tree **you need to act like a computer**. In other words, you will not be trying to understand "why", but rather only trying to find the data split that optimizes the classification accuracy.
+
+Consider the following data that show an outcome (circles OR triangles) based on values for two predictors, X1 and X2.
+
+
+```{r echo=FALSE, out.width='4in'}
+ggplot(data = my_data, aes(x = X1, y = X2)) +
+  geom_point(aes(fill = Outcome, shape = Outcome), size = 5, color = "black") +
+  theme_bw() +
+  scale_x_continuous(
+    name = "X1", 
+    limits = c(0, 10),  
+    minor_breaks = 0.5:9.5,  
+    breaks = seq(from = 0, to = 10, by = 1)
+    ) +
+  scale_y_continuous(
+    name = "X2",    
+    limits = c(0, 10),  
+    minor_breaks = 0.5:9.5,  
+    breaks = seq(from = 0, to = 10, by = 1)
+    ) +
+  scale_shape_manual(values = c(21, 24)) +
+  scale_fill_simpsons() +
+  guides(shape = FALSE, fill = FALSE)
+```
+
+```{r echo=FALSE}
+# tab_01 = my_data %>%
+#   arrange(X1, X2) %>%
+#   head(22)
+# 
+# tab_02 = my_data %>%
+#   arrange(X1, X2) %>%
+#   tail(22)
+
+tab_01 = my_data %>%
+  arrange(X1, X2) %>%
+  slice(1:11)
+
+tab_02 = my_data %>%
+  arrange(X1, X2) %>%
+  slice(12:22)
+
+tab_03 = my_data %>%
+  arrange(X1, X2) %>%
+  slice(23:33)
+
+tab_04 = my_data %>%
+  arrange(X1, X2) %>%
+  slice(34:n())
+
+cbind(tab_01, tab_02, tab_03, tab_04) %>%
+  knitr::kable(align = c("c", "c", "l"))
+```
+
+
+
+## First Decision Rule
+
+The first step in the recursive partitioning algorithm is to partition the data into two parts using *a single vertical or horizontal line*. This line represents a decision rule for classifying cases on one side of the line as "triangles" and cases on the other side of the line as "circles". The algorithm will decide where to put this line by choosing the line that results in the highest classification accuracy possible for the data. 
+
+
+1. Draw *a single horizontal or vertical line* through the data that results in the highest possible classification accuracy for the data. Indicate the side of the line that is to be classified as "triangles" and that which will be classified as "circles".
+
+
+\newpage
+
+In our example, the first partition of the data is based on the rule: 
+
+> **Rule 1:** IF ($X1 \geq 5.4$) THEN (classify as "triangle") ELSE (classify as "circle"). 
+
+Graphically this looks like this:
+
+```{r echo=FALSE, out.width='4in'}
+ggplot(data = my_data, aes(x = X1, y = X2)) +
+  geom_point(aes(fill = Outcome, shape = Outcome), size = 5, color = "black") +
+  theme_bw() +
+  scale_x_continuous(
+    name = "X1", 
+    limits = c(0, 10),  
+    minor_breaks = 0.5:9.5,  
+    breaks = seq(from = 0, to = 10, by = 1)
+    ) +
+  scale_y_continuous(
+    name = "X2",    
+    limits = c(0, 10),  
+    minor_breaks = 0.5:9.5,  
+    breaks = seq(from = 0, to = 10, by = 1)
+    ) +
+  scale_shape_manual(values = c(21, 24)) +
+  scale_fill_simpsons() +
+  guides(shape = FALSE, fill = FALSE)  +
+  annotate("rect", xmin = -Inf, xmax = 5.4, ymin = -Inf, ymax = Inf, fill = "#fed439", alpha = 0.2) +
+  annotate("rect", xmin = 5.4, xmax = Inf, ymin = -Inf, ymax = Inf, fill = "#709ae1", alpha = 0.2) +
+  annotate("segment", x = 5.4, xend = 5.4, y = -Inf, yend = Inf) +
+  geom_label(data = my_lab[1, ], aes(label = lab)) 
+```
+
+This rule results in an overall classification accuracy of $32 / 44 = 0.73$. This rule is subsequently the first (top) rule in your decision tree. For example,
+
+```{r echo=FALSE}
+grViz("activity-08-tree-01.gv")
+```
+
+
+\newpage
+
+## Second Set of Decision Rules
+
+Based on the first decision rule the algorithm has partitioned the data into two parts. The algorithm now continues by treating each partition as a "new" plot. For each of these new plots, it will re-apply itself; again finding a single vertical or horizontal line to classify cases on one side of the line as "triangles" and cases on the other side of the line as "circles" and choosing that line such that it results in the highest classification accuracy possible for the data in that "new" plot.
+
+3. Consider the cases that were classified as circles by your first decision rule (those with an X1 value less than 5.4). Draw *a single horizontal or vertical line* through the data that results in the highest possible classification accuracy for those cases. Indicate the side of the line that is to be classified as "triangles" and that which will be classified as "circles".
+
+
+\newpage
+
+
+In our example, the second partition of the data for the cases previously classified as circles is based on the rule: 
+
+> **Rule 2.1:** IF ($X1 < 0.2$) THEN (classify as "triangle") ELSE (classify as "circle"). 
+
+Graphically this looks like this:
+
+```{r echo=FALSE, out.width='4in'}
+ggplot(data = my_data, aes(x = X1, y = X2)) +
+  geom_point(aes(fill = Outcome, shape = Outcome), size = 5, color = "black") +
+  theme_bw() +
+  scale_x_continuous(
+    name = "X1", 
+    limits = c(0, 10),  
+    minor_breaks = 0.5:9.5,  
+    breaks = seq(from = 0, to = 10, by = 1)
+    ) +
+  scale_y_continuous(
+    name = "X2",    
+    limits = c(0, 10),  
+    minor_breaks = 0.5:9.5,  
+    breaks = seq(from = 0, to = 10, by = 1)
+    ) +
+  scale_shape_manual(values = c(21, 24)) +
+  scale_fill_simpsons() +
+  guides(shape = FALSE, fill = FALSE)  +
+  annotate("rect", xmin = -Inf, xmax = 0.2, ymin = -Inf, ymax = Inf, fill = "#709ae1", alpha = 0.2) +
+  annotate("rect", xmin = 0.2, xmax = 5.4, ymin = -Inf, ymax = Inf, fill = "#fed439", alpha = 0.2) +
+  annotate("rect", xmin = 5.4, xmax = Inf, ymin = -Inf, ymax = Inf, fill = "#709ae1", alpha = 0.2) +
+  annotate("segment", x = 5.4, xend = 5.4, y = -Inf, yend = Inf) +
+  annotate("segment", x = 0.2, xend = 0.2, y = -Inf, yend = Inf) +
+  geom_label(data = my_lab[1:2, ], aes(label = lab)) 
+```
+
+There are now two decision rules partitioning the data which, in our example, result in an overall classification accuracy of $34/44=0.77$.  The tree diagram after including the second decision rule is as follows:
+
+```{r echo=FALSE}
+grViz("activity-08-tree-02.gv")
+```
+
+
+4. Consider the cases that were classified as triangles by your first decision rule (those with an X1 value greater than or equal to 5.4). Draw *a single horizontal or vertical line* through the data that results in the highest possible classification accuracy for those cases. Indicate the side of the line that is to be classified as "triangles" and that which will be classified as "circles".
+
+
+\newpage
+
+
+In our example, this partition of the data for the cases initially classified as triangles is based on the rule: 
+
+> **Rule 2.2:** IF ($X2 \geq 4.35$) THEN (classify as "triangle") ELSE (classify as "circle"). 
+
+Graphically this looks like this:
+
+```{r echo=FALSE, out.width='4in'}
+ggplot(data = my_data, aes(x = X1, y = X2)) +
+  geom_point(aes(fill = Outcome, shape = Outcome), size = 5, color = "black") +
+  theme_bw() +
+  scale_x_continuous(
+    name = "X1", 
+    limits = c(0, 10),  
+    minor_breaks = 0.5:9.5,  
+    breaks = seq(from = 0, to = 10, by = 1)
+    ) +
+  scale_y_continuous(
+    name = "X2",    
+    limits = c(0, 10),  
+    minor_breaks = 0.5:9.5,  
+    breaks = seq(from = 0, to = 10, by = 1)
+    ) +
+  scale_shape_manual(values = c(21, 24)) +
+  scale_fill_simpsons() +
+  guides(shape = FALSE, fill = FALSE)  +
+  annotate("rect", xmin = -Inf, xmax = 0.2, ymin = -Inf, ymax = Inf, fill = "#709ae1", alpha = 0.2) +
+  annotate("rect", xmin = 0.2, xmax = 5.4, ymin = -Inf, ymax = Inf, fill = "#fed439", alpha = 0.2) +
+  annotate("rect", xmin = 5.4, xmax = Inf, ymin = 4.35, ymax = Inf, fill = "#709ae1", alpha = 0.2) +
+  annotate("rect", xmin = 5.4, xmax = Inf, ymin = -Inf, ymax = 4.35, fill = "#fed439", alpha = 0.2) +
+  annotate("segment", x = 5.4, xend = 5.4, y = -Inf, yend = Inf) +
+  annotate("segment", x = 5.4, xend = Inf, y = 4.35, yend = 4.35) +
+  annotate("segment", x = 0.2, xend = 0.2, y = -Inf, yend = Inf) +
+  geom_label(data = my_lab[1:3, ], aes(label = lab)) 
+```
+
+There are now three decision rules partitioning the data which, in our example, result in an overall classification accuracy of $44/44=1.00$. The tree diagram after including the second decision rule is as follows:
+
+```{r echo=FALSE}
+grViz("activity-08-tree-03.gv")
+```
+
+## More Decision Rules
+
+We have perfectly classified 100\% of the training data with our three decision rules. If we hadn't, the algorithm would have continued. For example, each of the decision rules we previously added resulted in "new" plots that could be further partitioned. The algorithm would look at any "new" plot that does not have 100\% accuracy to see if it can be partitioned in a way that increases accuracy. Are you starting to understand why the algorithm is referred to as *recursive partitioning*?
+
+
+## Tree Pruning
+
+The decision tree resulting from the recursive partitioning carried out on the training data is overfitted to the training data. (After all, it ended up with 100\% classification accuracy, and would likely not classify 100\% of new cases perfectly.) To help reduce the problem of overfit, we will **prune** the decision tree. 
+
+The first decision rule in the tree was the most important in that it provided the highest initial classification accuracy. The second set of decisions was then next most important, and so on down to the last set of decision rules. The idea of pruning is that we prune, or trim, decision rules from the tree starting with the least important rules (the last rules added).
+
+Recall that any evaluation of the decision tree needs to be carried out using a new set of data, the *validation data*. As pruning is a part of the evaluation process, it also needs to be carried out using validation data. Below we provide you with 25 new cases to use in this endeavor.
+
+
+```{r echo=FALSE, results='asis', out.width='4in', fig.caption='Plot of the validation data.', fig.pos='H', message=FALSE}
+tab_03 = read.csv("data/activity-08-validation-data.csv") %>%
+  mutate(Outcome = as.character(Outcome)) %>%
+  head(13)
+
+tab_04 = read.csv("data/activity-08-validation-data.csv") %>%
+  mutate(Outcome = as.character(Outcome)) %>%
+  tail(12) %>%
+  rbind(c(""))
+
+cbind(tab_03, tab_04) %>%
+  knitr::kable(align = "c")
+
+readr::read_csv("data/activity-08-validation-data.csv") %>%
+ggplot(aes(x = X1, y = X2)) +
+  geom_point(aes(fill = Outcome, shape = Outcome), size = 5, color = "black") +
+  theme_bw() +
+  scale_x_continuous(
+    name = "X1",
+    limits = c(-2, 10),
+    minor_breaks = -1.5:9.5,
+    breaks = seq(from = -2, to = 10, by = 1)
+  ) +
+  scale_y_continuous(
+    name = "X2",
+    limits = c(-4, 10),
+    minor_breaks = -3.5:9.5,
+    breaks = seq(from = -4, to = 10, by = 1)
+  ) +
+  scale_shape_manual(values = c(21, 24)) +
+  scale_fill_simpsons() +
+  guides(shape = FALSE, fill = FALSE)
+```
+
+
+5. Begin the process of evaluation by computing the classification accuracy for the model that classified 100\% of the training cases correctly (includes Rule 1, 2.1, and 2.2). Note: *Do not update or change any of the decision rules. Just use them to compute the classification accuracy.*
+
+\vspace{0.5in}
+
+Our next step in the pruning process is to remove a single decision rule from the bottom of the tree. In our tree there are two decision rules at the same stage (Stage 2) at the bottom of the tree. We only remove one of those rules to begin with. (Which of the two you begin with is up to you.) For consistency, we will remove the rule on the right-side of the tree, Rule 2.2.
+
+6. Compute the classification accuracy for the model that includes all rules except Rule 2.2. 
+
+\vspace{0.5in}
+
+
+We can now compare the classification accuracies for the model that includes all the decision rules and the model that omits Rule 2.2. This comparison will allow us to evaluate whether or not including Rule 2.2 *improves* the classification accuracy. Our threshold for improvement will be: *to include the rule we need to improve the classification accuracy by at least 4 percentage points*. If the classification accuracy does not improve by at least 4 percentage points that is evidence for pruning that rule.
+
+7. Compare the classification accuracies you computed in Questions 5 and 6. Should we prune Rule 2.2 or leave Rule 2.2 in the model? Explain.
+
+\newpage
+
+Including Rule 2.2 resulted in an improvement in classification accuracy of 8 percentage points. Thus we will keep Rule 2.2 in the model, as well as all the decision rules that precede Rule 2.2 in the tree. By keeping Rule 2.2, we also have to keep Rule 1 since it is further up the tree from Rule 2.2.
+
+What about Rule 2.1? That rule, which was also added in Stage 2, does not preceded Rule 2.2. Thus it is a candidate for pruning. Should Rule 2.1 be pruned or not? To determine whether or not to prune Rule 2.1, we need to compare the tree based on all the rules we are keeping (Rule 1 nd Rule 2.2) to a tree that includes those rules and Rule 2.1 (e.g., a tree that includes Rules 1, 2.1, and 2.2).
+
+8. Compute the classification accuracy for the two models that allow you to evaluate whether or not to prune Rule 2.1. 
+
+\vspace{0.5in}
+
+9. Use the classification accuracies you computed in Question 8 to evaluate whether or not to prune Rule 2.1. Explain.
+
+\newpage
+
+Removing Rule 2.1 actually resulted in an improvement in classification accuracy of 4 percentage points. Therefore we will prune Rule 2.1. The tree for the resulting model is given below.
+
+```{r echo=FALSE}
+grViz("activity-08-tree-04.gv")
+```
+
+10. Based on the tree, and our evaluation so far, are there any more decision rules we can consider for pruning? Explain.
+
+
+
+
+
+

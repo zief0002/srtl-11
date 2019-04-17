@@ -1,0 +1,269 @@
+---
+title: "Buiding Decision Trees"
+date: "`r Sys.Date()`"
+header-includes:
+   - \usepackage{xcolor}
+   - \usepackage[framemethod=tikz]{mdframed}
+   - \usepackage{graphicx}
+   - \usepackage{rotating}
+   - \usepackage{booktabs}
+   - \usepackage{float}
+   - \usepackage{lscape}
+   - \usepackage{subcaption}
+   - \definecolor{umn}{RGB}{153, 0, 85}
+   - \definecolor{umn2}{rgb}{0.1843137, 0.4509804, 0.5372549}
+   - \definecolor{myorange}{HTML}{EA6153}
+output: 
+  pdf_document:
+    highlight: tango
+    latex_engine: xelatex
+    fig_width: 6
+    fig_height: 6
+mainfont: "Bembo Std"
+sansfont: "Helvetica Neue UltraLight"
+monofont: Inconsolata
+urlcolor: "umn2"
+always_allow_html: yes
+---
+
+```{r setup, include=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(ggplot2)
+library(huxtable)
+library(tidyr)
+library(DiagrammeR)
+
+same_sex = readr::read_csv("data/training-data.csv")
+```
+
+
+
+## Building a Decision Tree from Data
+
+In previous CART activities, you were supplied with pre-built decision trees. This time, you will be creating a tree from a small set of data. The data set (shown below) includes two variables for a sample of 24 people: the person's age and whether or not the person supports same-sex marriage. Your task is to create a classification tree using the data (not your intuition) that will predict whether or not a person supports same-sex marriage based on their age. 
+
+To build the tree you will create a set of decision rules based on age that attempt to classify people as "supports same-sex marriage" or "does not support same-sex marriage". For example, consider the following dataset:
+
+```{r echo=FALSE, eval=FALSE}
+marriage = data.frame(
+  Age = c(22, 23, 24, 24, 26),
+  y = c(1, 1, 1, 3.25, 1),
+  Support = c("Support", "Support", "Support", "Support", "Does not support")
+)
+
+
+# Create plot
+p = ggplot(data = marriage, aes(x = Age, y = y, fill = Support)) +
+  geom_point(
+    pch = 21,
+    size = 5
+    ) +
+  theme_minimal() +
+  ggsci::scale_fill_d3(
+    name = NULL,
+    labels = c("Does not support", "Support")
+    ) +
+  scale_x_continuous(
+    name = "Age",
+    limits = c(20, 30),
+    breaks = 20:30
+  ) +
+  scale_y_continuous(
+    name = "",
+    breaks = NULL,
+    limits = c(0, 30)
+  ) +
+  theme(
+    axis.ticks.x = element_line(),
+    panel.grid = element_line(size = 0),
+    legend.position = c(0.5, 0.6),
+    legend.key.size = unit(2,"line"),
+    legend.text = element_text(size = 10),
+    legend.box.background = element_rect(color = "black")
+  ) 
+
+ggsave(p, filename = "figs/example-data.png", width = 6, height = 3)
+```
+
+```{r echo=FALSE, out.width="4in", fig.align='center'}
+knitr::include_graphics("figs/example-data.png")
+```
+
+
+
+In these data, a good partitioning might be at 25 years of age since everyone younger than 25 supports same-sex marriage and everyone over 25 does not support same-sex marriage. Your decision rule might then be: `{age < 25?}` If "Yes", they support same-sex marriage. If "No", they do not support same-sex marriage.
+
+
+To keep things consistent in each decision (and across groups), write your decision rule so that people classified as supporting same-sex marriage will end up in the right leaf. Subsequently, people classified  as not supporting same-sex marriage, and will end up in the left leaf. For example, the decision rule of `{age < 25?}` follows these criteria, but the rule `{age > 25?}` reverses this.
+
+```{r message=FALSE, echo=FALSE, eval=FALSE}
+# Create a simple NDF
+nodes =
+  create_node_df(
+    n = 3,
+    #type = c("a", "a", "b", "b"),
+    label = c("Age < 25?", "No support", "Support"),
+    color = "gray20",
+    fillcolor = "white",
+    shape = c("box", "oval", "oval"),
+    fontname = "Baskerville",
+    fontsize = 6
+    )
+
+
+# Create a simple EDF
+edges <-
+  create_edge_df(
+    from = c(1, 1),
+    to = c(2, 3),
+    rel = c("Age < 25", "Age >= 10"),
+    label = c("No", "Yes  "),
+    labeldistance = 1,
+    labelfloat = TRUE,
+    headport = "n",
+    color = "gray20",
+    fontname = "Baskerville",
+    fontsize = 6
+  )
+
+# Create the graph object,
+# incorporating the NDF and
+# the EDF, and, providing some
+# global attributes
+create_graph(
+    nodes_df = nodes,
+    edges_df = edges
+    ) %>%
+  render_graph(layout = "tree")
+
+
+######### INCORRECT
+
+nodes =
+  create_node_df(
+    n = 3,
+    #type = c("a", "a", "b", "b"),
+    label = c("Age > 25?", "Support", "No support"),
+    color = "gray20",
+    fillcolor = "white",
+    shape = c("box", "oval", "oval"),
+    fontname = "Baskerville",
+    fontsize = 6
+    )
+
+
+# Create a simple EDF
+edges <-
+  create_edge_df(
+    from = c(1, 1),
+    to = c(2, 3),
+    rel = c("Age < 25", "Age >= 10"),
+    label = c("No", "Yes  "),
+    labeldistance = 1,
+    labelfloat = TRUE,
+    headport = "n",
+    color = "gray20",
+    fontname = "Baskerville",
+    fontsize = 6
+  )
+
+# Create the graph object,
+# incorporating the NDF and
+# the EDF, and, providing some
+# global attributes
+create_graph(
+    nodes_df = nodes,
+    edges_df = edges
+    ) %>%
+  render_graph(layout = "tree")
+
+```
+
+
+```{r echo=FALSE, fig.cap="Left tree shows a decision rule that CORRECTLY classifies supporters into the right leaf and non-supporters into the left leaf. Right tree shows a decision rule that INCORRECTLY classifies supporters into the left leaf and non-supporters into the right leaf.", out.width="4in", fig.align='center', fig.pos="H"}
+knitr::include_graphics("figs/both-trees.pdf")
+```
+
+\newpage
+
+
+1. Create a classification tree using the training data (provided on the next page).
+
+\newpage
+
+## Training Data
+
+\noindent\makebox[\textwidth][c]{%
+\begin{minipage}{.6\linewidth}
+\begin{tabular}{cl}
+\hline \\[-0.5em]
+\textbf{Age} & \textbf{Support} \\
+\hline \\[-0.5em]
+19 & Support \\[0.5em]
+\hline \\[-0.5em]
+22 & Support \\[0.5em]
+\hline \\[-0.5em]
+27 & Support \\[0.5em]
+\hline \\[-0.5em]
+30 & Support \\[0.5em]
+\hline \\[-0.5em]
+33 & Does not support \\[0.5em]
+\hline \\[-0.5em]
+36 & Support \\[0.5em]
+\hline \\[-0.5em]
+39 & Does not support \\[0.5em]
+\hline \\[-0.5em]
+39 & Does not support \\[0.5em]
+\hline \\[-0.5em]
+41 & Support \\[0.5em]
+\hline \\[-0.5em]
+47 & Support \\[0.5em]
+\hline \\[-0.5em]
+52 & Does not support \\[0.5em]
+\hline \\[-0.5em]
+55 & Support \\[0.5em]
+\hline \\[-0.5em]
+\end{tabular}
+\qquad
+\begin{tabular}{cl}
+\hline \\[-0.5em]
+\textbf{Age} & \textbf{Support} \\
+\hline \\[-0.5em]
+55 & Support \\[0.5em]
+\hline \\[-0.5em]
+58 & Support \\[0.5em]
+\hline \\[-0.5em]
+58 & Does not support \\[0.5em]
+\hline \\[-0.5em]
+58 & Does not support \\[0.5em]
+\hline \\[-0.5em]
+61 & Support \\[0.5em]
+\hline \\[-0.5em]
+63 & Support \\[0.5em]
+\hline \\[-0.5em]
+72 & Does not support \\[0.5em]
+\hline \\[-0.5em]
+74 & Does not support \\[0.5em]
+\hline \\[-0.5em]
+80 & Does not support \\[0.5em]
+\hline \\[-0.5em]
+80 & Does not support \\[0.5em]
+\hline \\[-0.5em]
+83 & Does not support \\[0.5em]
+\hline \\[-0.5em]
+85 & Support \\[0.5em]
+\hline \\[-0.5em]
+\end{tabular}
+\end{minipage}}
+
+\vspace{5em}
+
+```{r echo=FALSE, fig.cap="Dotplot of the training data.", out.width="6in", fig.align='center', fig.pos="H"}
+knitr::include_graphics("figs/training-data-dotplot.pdf")
+```
+
+\newpage
+
+2. Compute your classification model's overall mis-classification rate.
+

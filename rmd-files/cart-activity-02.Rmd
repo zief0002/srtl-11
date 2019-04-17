@@ -1,0 +1,191 @@
+---
+title: "Classification Trees"
+date: "`r Sys.Date()`"
+header-includes:
+   - \usepackage{xcolor}
+   - \usepackage[framemethod=tikz]{mdframed}
+   - \usepackage{graphicx}
+   - \usepackage{rotating}
+   - \usepackage{booktabs}
+   - \usepackage{float}
+   - \usepackage{lscape}
+   - \definecolor{umn}{RGB}{153, 0, 85}
+   - \definecolor{umn2}{rgb}{0.1843137, 0.4509804, 0.5372549}
+   - \definecolor{myorange}{HTML}{EA6153}
+output: 
+  pdf_document:
+    highlight: tango
+    latex_engine: xelatex
+    fig_width: 6
+    fig_height: 6
+mainfont: "Bembo Std"
+sansfont: "Helvetica Neue UltraLight"
+monofont: Inconsolata
+urlcolor: "umn2"
+always_allow_html: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(titanic)
+library(dplyr)
+library(huxtable)
+library(tidyr)
+
+set.seed(1000)
+
+train = titanic_train %>% 
+  drop_na(Age) %>%
+  sample_n(30) %>%
+  mutate( 
+    Fate = if_else(Survived == 0, "Died", "Survived"), 
+    Model_1 = NA,
+    Model_2 = NA,
+    Model_3 = NA,
+    Model_4 = NA,
+    Model_5 = NA
+    ) %>%
+  select(Passenger = Name, 'Model 1' = Model_1, 'Model 2' = Model_2, 'Model 3' = Model_3, 'Model 4' = Model_4, 'Model 5' = Model_5, Fate) %>%
+  arrange(Passenger)
+```
+
+
+
+## Classification Tree: Model 1
+
+You have been given a set of index cards that give data on 30 passengers on the Titanic. Each card represents one passenger. You have also been given a *classification tree* (see Classification Tree: Model 1 on the next page) that provides rules for classifying whether or not each passenger survived. The tree is a visual model of a classification algorithm. We will call this classification algorithm *Model 1*.  
+
+
+1. For each passenger, use the data provided along with the classification algorithm to predict whether each of the 30 passengers *Died* or *Survived*. Fill in the classification prediction for each of the 30 passengers in Tables 1 and 2 (under column "Model 1").
+
+\vspace{2em}
+
+2. In the table where you put the predictions you can find out whether that passenger actually survived (under the "Fate" column). The classification algorithm correctly classified some of the passengers, and incorrectly classified others. You will use the classifications from Model 1 and the passengers' actual fates to create a **classification table** for Model 1. To do this, fill in the table below by counting and recording the number of passengers in each cell of the table. Also compute and record in the table the percentage of the 30 passengers in each cell.
+
+```{r echo=FALSE, fig.cap="Classification Table: Model 1", fig.pos='H', fig.align='center'}
+knitr::include_graphics("~/Dropbox/SRTL-11/tree-models/classification-table.pdf")
+```
+
+\newpage
+
+```{r echo=FALSE, fig.cap="Classification Tree: Model 1", fig.pos='H', out.width='7in', fig.align='center'}
+knitr::include_graphics("~/Dropbox/SRTL-11/tree-models/titanic-model-01.pdf")
+```
+
+\newpage
+
+3. Use the information from your classification table to come up with a quantitative measure of the classification accuracy of the tree algorithm.
+
+\vspace{1.5in}
+
+4. Based on your measure of classification accuracy, was the tree algorithm a "good" model? Explain.
+
+\vspace{1in}
+
+## Single Classification Models
+
+5. Almost all of the passengers aboard the Titanic died. One algorithm we could use to classify passengers is one that has a single classification: Classify everyone as "Died" (Model 2). Fill in the "Model 2" column of Tables 1 and 2 based on this algorithm.
+
+\vspace{2em}
+
+6. Fill in the classification table below for Model 2 based on this algorithm and the passengers' actual fates. Again, compute the counts and percentages for each cell.
+
+```{r echo=FALSE, fig.cap="Classification Table: Model 2", fig.pos='H', fig.align='center'}
+knitr::include_graphics("~/Dropbox/SRTL-11/tree-models/classification-table.pdf")
+```
+
+\newpage
+
+7. Create the classification tree for Model 2.
+
+\vspace{1in}
+
+8. Model 2 is one of the two simplest classification algorithms we could create; after all there are no decisions and only a single classification. There is one other classification algorithm that also has a single classification. Write the algorithm for this model (Model 3) and fill in the classifications from this algorithm in the "Model 3" column of Tables 1 and 2. Also, compute the counts and percentages for each cell in the classification table for this algorithm.
+
+\vspace{1in}
+
+```{r echo=FALSE, fig.cap="Classification Table: Model 3", fig.pos='H', fig.align='center'}
+knitr::include_graphics("~/Dropbox/SRTL-11/tree-models/classification-table.pdf")
+```
+
+9. Of the two single classification models, Model 2 and Model 3, which is the better classification model? Explain.
+
+\newpage
+
+### Baseline Model for Comparisons
+
+The single classification model that has the better classification accuracy can be used as a baseline model to which we can compare the classification accuracy of other models.
+
+10. Using the better single classification model, re-evaluate whether you think that the first model (Model 1) was "good". Explain why or why not.
+
+\vspace{1.5in}
+
+11. Quantify how much better (or worse) Model 1 is than your chosen baseline model.
+
+\newpage
+
+## Two Additional Classification Algorithms
+
+12. You have been given the tree models for two additional classification algorithms (Models 4 and 5). For each, 
+
+a) Fill in the classification predictions in Tables 1 and 2;
+b) Construct a classification table; and 
+c) Quantify how much better (or worse) the model is than your chosen baseline model.
+
+
+\newpage
+
+```{r echo=FALSE, fig.cap="Classification Tree: Model 4", fig.pos='H', out.width='7in', fig.align='center'}
+knitr::include_graphics("~/Dropbox/SRTL-11/tree-models/titanic-model-04.pdf")
+```
+
+```{r echo=FALSE, fig.cap="Classification Tree: Model 5", fig.pos='H', out.width='7in', fig.align='center'}
+knitr::include_graphics("~/Dropbox/SRTL-11/tree-models/titanic-model-05.pdf")
+```
+
+
+13. You have now looked at five different classification algorithms. Rank order the five algorithms from "worst" to "best". Explain how you are making these rankings.
+
+\newpage
+
+\begin{landscape}
+
+```{r echo=FALSE}
+hux(train[1:15, ], add_colnames = TRUE) %>%
+  set_bold(1, everywhere, TRUE) %>%
+  #set_bold(everywhere, 1, TRUE) %>%
+  #set_bottom_border(1, everywhere, 1) %>%
+  #set_top_border(1, everywhere, 1) %>%
+  set_all_borders(1) %>%
+  set_position('left') %>%
+  set_width("6in") %>%
+  set_row_height("2em") %>%
+  set_background_color(1, everywhere, 'grey80') %>%
+  set_caption('Classifications and Actual Fate for Passengers 1--15 in the Test Data Set')
+
+```
+
+\end{landscape}
+
+
+
+\newpage
+
+\begin{landscape}
+
+```{r echo=FALSE}
+hux(train[16:30, ], add_colnames = TRUE) %>%
+  set_bold(1, everywhere, TRUE) %>%
+  #set_bold(everywhere, 1, TRUE) %>%
+  #set_bottom_border(1, everywhere, 1) %>%
+  #set_top_border(1, everywhere, 1) %>%
+  set_all_borders(1) %>%
+  set_position('left') %>%
+  set_width("6in") %>%
+  set_row_height("2em") %>%
+  set_background_color(1, everywhere, 'grey80')  %>%
+  set_caption('Classifications and Actual Fate for the Passengers 16--30 in the Test Data Set')
+
+```
+
+\end{landscape}

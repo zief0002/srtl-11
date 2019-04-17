@@ -1,0 +1,142 @@
+---
+title: "Model Selection: Weighing Model Complexity and Model Performance"
+date: "`r Sys.Date()`"
+header-includes:
+   - \usepackage{xcolor}
+   - \usepackage[framemethod=tikz]{mdframed}
+   - \usepackage{graphicx}
+   - \usepackage{rotating}
+   - \usepackage{booktabs}
+   - \usepackage{float}
+   - \usepackage{lscape}
+   - \definecolor{umn}{RGB}{153, 0, 85}
+   - \definecolor{umn2}{rgb}{0.1843137, 0.4509804, 0.5372549}
+   - \definecolor{myorange}{HTML}{EA6153}
+output: 
+  pdf_document:
+    highlight: tango
+    latex_engine: xelatex
+    fig_width: 6
+    fig_height: 6
+mainfont: "Bembo Std"
+sansfont: "Helvetica Neue UltraLight"
+monofont: Inconsolata
+urlcolor: "umn2"
+always_allow_html: yes
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(titanic)
+library(dplyr)
+library(huxtable)
+library(tidyr)
+
+set.seed(1000)
+
+validation = titanic_train %>% 
+  drop_na(Age) %>%
+  sample_n(60) %>%
+  mutate( 
+    Fate = if_else(Survived == 0, "Died", "Survived"), 
+    Model_1 = NA,
+    Model_2 = NA,
+    Model_3 = NA,
+    Model_4 = NA,
+    Model_5 = NA,
+    samp = row_number()
+  ) %>%
+  filter(samp > 30) %>%
+  select(
+    Passenger = Name, 
+    'Model 1' = Model_1, 
+    'Model 2' = Model_2, 
+    'Model 3' = Model_3, 
+    'Model 4' = Model_4, 
+    'Model 5' = Model_5, 
+    Fate
+    ) %>%
+  arrange(Passenger)
+```
+
+
+
+## Model Complexity
+
+In the previous activity, you ranked five classification algorithms based on their performance (prediction accuracy). In this activity, you will also consider the complexity of the models and use that, along with the performance, to select the "best" algorithm.
+
+
+1. Rank order each of the five classification algorithms based on how complex the algorithms are (from simplest to most complex). Explain how you are making these rankings.
+
+\vspace{1.5in}
+
+The primary goal of any classification algorithm is to make accurate classifications. A subgoal is that the classification model we adopt needs to be as simple as possible; Occam's Razor---if two models predict equally well, adopt the simpler model. 
+
+2. Select (or adopt) the best algorithm from the five candidate algorithms. To do this you will need to weigh the algorithms' classification accuracy against their complexity. Explain how you decided which algorithm to adopt.
+
+\newpage
+
+Based on your rankings, you may have seen that more complex algorithms tend to make more accurate classifications. However, more complex algorithms do not tend to generalize as well to new datasets. This phenomenon is called *overfitting*. In order for the classification algorithm to be considered "good" it also needs to be able to accurately classify passengers from a new data set. 
+
+3. You will be given a new set of index cards (henceforth referred to as the **validation data**). For each of the five candidate algorithms, use the validation data to: 
+
+a) Fill in the classification predictions in Tables 1 and 2; and
+b) Construct a classification table.
+
+\newpage
+
+
+4. Rank order your models from worst to best based on the algorithms' (a) classification accuracy and (b) model complexity. (Two separate rank orderings.)
+
+\vspace{1.5in}
+
+5. Which algorithm performed the "best" according to the validation dataset? Again, weigh the algorithms' classification accuracy against their complexity. Explain how you decided which algorithm to adopt.
+
+\vspace{1.5in}
+
+
+6. Prepare a brief presentation of the results of your validation sets. In this presentation, also include a general outline of key ideas around the use of classification algorithms for making predictions. 
+
+\newpage
+
+\begin{landscape}
+
+```{r echo=FALSE}
+hux(validation[1:15, ], add_colnames = TRUE) %>%
+  set_bold(1, everywhere, TRUE) %>%
+  #set_bold(everywhere, 1, TRUE) %>%
+  #set_bottom_border(1, everywhere, 1) %>%
+  #set_top_border(1, everywhere, 1) %>%
+  set_all_borders(1) %>%
+  set_position('left') %>%
+  set_width("6in") %>%
+  set_row_height("2em") %>%
+  set_background_color(1, everywhere, 'grey80') %>%
+  set_caption('Classifications and Actual Fate for Passengers 1--15 in the Validation Data Set')
+
+```
+
+\end{landscape}
+
+
+
+\newpage
+
+\begin{landscape}
+
+```{r echo=FALSE}
+hux(validation[16:30, ], add_colnames = TRUE) %>%
+  set_bold(1, everywhere, TRUE) %>%
+  #set_bold(everywhere, 1, TRUE) %>%
+  #set_bottom_border(1, everywhere, 1) %>%
+  #set_top_border(1, everywhere, 1) %>%
+  set_all_borders(1) %>%
+  set_position('left') %>%
+  set_width("6in") %>%
+  set_row_height("2em") %>%
+  set_background_color(1, everywhere, 'grey80')  %>%
+  set_caption('Classifications and Actual Fate for the Passengers 16--30 in the Validation Data Set')
+
+```
+
+\end{landscape}

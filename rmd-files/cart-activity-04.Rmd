@@ -1,0 +1,46 @@
+---
+title: "Reflection Questions"
+date: "`r Sys.Date()`"
+header-includes:
+   - \usepackage{xcolor}
+   - \usepackage[framemethod=tikz]{mdframed}
+   - \usepackage{graphicx}
+   - \usepackage{rotating}
+   - \usepackage{booktabs}
+   - \usepackage{float}
+   - \usepackage{lscape}
+   - \definecolor{umn}{RGB}{153, 0, 85}
+   - \definecolor{umn2}{rgb}{0.1843137, 0.4509804, 0.5372549}
+   - \definecolor{myorange}{HTML}{EA6153}
+output: 
+  pdf_document:
+    highlight: tango
+    latex_engine: xelatex
+    fig_width: 6
+    fig_height: 6
+mainfont: "Bembo Std"
+sansfont: "Helvetica Neue UltraLight"
+monofont: Inconsolata
+urlcolor: "umn2"
+always_allow_html: yes
+---
+
+
+1. How do the ideas of model performance, model complexity, and model selection in the three classification activities relate to the content you teach in the EPsy 3264 course? Explain.
+
+\vspace{2in}
+
+2. The classification algorithms you examined in the activities can be thought of as **algorithmic models**. The models we use in EPsy 3264 are **statistical models**. What do you see as commonalities/differences between algorithmic models and statistical models?
+
+\vspace{2in}
+
+3. Identify a research question that would be more appropriately answered by using an algorithmic model rather than a statistical model. Explain.
+
+\vspace{2in}
+
+4. Identify a research question that would be more appropriately answered by using an statistical model rather than an algorithmic model. Explain.
+
+\vspace{2in}
+
+
+5. Identify a topic in 3264 that is related to model performance, model complexity, or model selection. Drawing from your experience with the three activities, describe any changes you might make to how you teach the topic you chose.
